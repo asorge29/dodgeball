@@ -108,11 +108,12 @@ public class PlayerController : MonoBehaviour
     {
         if (ballPrefab != null)
         {
-            GameObject ball = Instantiate(ballPrefab, transform.position, transform.rotation);
+            GameObject ball = Instantiate(ballPrefab, playerCamera.transform.position, playerCamera.transform.rotation);
             Rigidbody ballRb = ball.GetComponent<Rigidbody>();
             if (ballRb != null)
             {
-                ballRb.AddForce(Vector3.forward * throwPower, ForceMode.Impulse);
+                Vector3 throwDirection = playerCamera.transform.forward;
+                ballRb.AddForce(throeDirection * throwPower, ForceMode.Impulse);
             }
         }
     }
