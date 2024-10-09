@@ -1,3 +1,4 @@
+using UnityEditor.Search;
 using UnityEngine;
 
 // Controls player movement and rotation.
@@ -8,6 +9,9 @@ public class PlayerController : MonoBehaviour
     public float jumpPower = 8.0f;
 
     public Camera playerCamera;
+    
+    public GameObject ballPrefab;
+    public float throwPower = 10.0f;
     
     public int maxAmmo;
     public int defaultAmmo = 10;
@@ -22,7 +26,7 @@ public class PlayerController : MonoBehaviour
     public int ammo;
     
     private Rigidbody _rb; 
-    private float _rotationX = 0.0f;
+    private float _rotationX;
     private bool _isGrounded;
     
     
@@ -38,8 +42,12 @@ public class PlayerController : MonoBehaviour
     {
         Move();
         Look();
-        currentRotation = transform.eulerAngles
+        Vector3 currentRotation = transform.eulerAngles;
         transform.eulerAngles = new Vector3(0.0f, currentRotation.y, 0.0f);
+        if (Input.GetMouseButtonDown(0))
+        {
+            Throw();
+        }
     }
 
     private void Move()
@@ -67,18 +75,6 @@ public class PlayerController : MonoBehaviour
         transform.Rotate(0, mouseX, 0);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Ball"))
-        {
-            if (!other.GetComponent<Ball>().live)
-            {
-                ammo++;
-                Debug.Log(ammo.ToString());
-            }
-        }
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -92,9 +88,14 @@ public class PlayerController : MonoBehaviour
                 health -= 10;
                 Debug.Log(health.ToString());
             }
+            else
+            {
+                ammo++;
+                Debug.Log(ammo.ToString());
+            }
         }
     }
-
+    
     private void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -103,4 +104,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void Throw()
+    {
+        if (ballPrefab != null)
+        {
+            GameObject ball = Instantiate(ballPrefab, transform.position, transform.rotation);
+            Rigidbody ballRb = ball.GetComponent<Rigidbody>();
+            if (ballRb != null)
+            {
+                ballRb.AddForce(Vector3.forward * throwPower, ForceMode.Impulse);
+            }
+        }
+    }
 }

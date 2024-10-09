@@ -7,11 +7,9 @@ public class Ball : MonoBehaviour
 {
     [HideInInspector]
     public bool live;
-
-    private Collider _collider;
+    
     void Start()
     {
-        _collider = GetComponent<Collider>();
         live = true;
     }
 
@@ -21,20 +19,29 @@ public class Ball : MonoBehaviour
         
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if (other.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Wall") && live)
         {
-            Destroy(gameObject);
+            live = false;
+        }
+        else if (collision.gameObject.CompareTag("Player"))
+        {
+            if (!live)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player") && live)
+        if (collision.gameObject.CompareTag("Player"))
         {
-            live = false;
-            _collider.isTrigger = true;
+            if (live)
+            {
+                live = false;
+            }
         }
     }
 }
