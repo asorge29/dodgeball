@@ -38,8 +38,8 @@ public class PlayerController : MonoBehaviour
     {
         Move();
         Look();
-        //FIXME
-        transform.eulerAngles = new Vector3(0.0f, _rotationX, 0.0f);
+        currentRotation = transform.eulerAngles
+        transform.eulerAngles = new Vector3(0.0f, currentRotation.y, 0.0f);
     }
 
     private void Move()
