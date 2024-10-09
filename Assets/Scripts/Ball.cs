@@ -6,14 +6,16 @@ using UnityEngine;
 public class Ball : MonoBehaviour
 {
     [HideInInspector]
-    public bool live = true;
-    // Start is called before the first frame update
+    public bool live;
+
+    private Collider _collider;
     void Start()
     {
-
+        _collider = GetComponent<Collider>();
+        live = true;
     }
 
-    // Update is called once per frame
+
     void Update()
     {
         
@@ -23,15 +25,16 @@ public class Ball : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            if (live)
-            {
-                live = false;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
+            Destroy(gameObject);
         }
-        
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player") && live)
+        {
+            live = false;
+            _collider.isTrigger = true;
+        }
     }
 }

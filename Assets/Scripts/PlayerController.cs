@@ -38,6 +38,8 @@ public class PlayerController : MonoBehaviour
     {
         Move();
         Look();
+        //FIXME
+        transform.eulerAngles = new Vector3(0.0f, _rotationX, 0.0f);
     }
 
     private void Move()
@@ -69,12 +71,7 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Ball"))
         {
-            if (other.GetComponent<Ball>().live)
-            {
-                health -= 10;
-                Debug.Log(health.ToString());
-            }
-            else
+            if (!other.GetComponent<Ball>().live)
             {
                 ammo++;
                 Debug.Log(ammo.ToString());
@@ -87,6 +84,14 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             _isGrounded = true;
+        } 
+        else if (collision.gameObject.CompareTag("Ball"))
+        {
+            if (collision.gameObject.GetComponent<Ball>().live)
+            {
+                health -= 10;
+                Debug.Log(health.ToString());
+            }
         }
     }
 
