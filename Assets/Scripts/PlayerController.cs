@@ -3,9 +3,12 @@ using UnityEngine;
 // Controls player movement and rotation.
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 5.0f; // Set player's movement speed.
-    public float rotationSpeed = 120.0f; // Set player's rotation speed.
+    public float speed = 5.0f;
+    public float lookSpeed = 2f;
+    public float jumpPower = 8.0f;
 
+    public Camera playerCamera;
+    
     public int maxAmmo;
     public int defaultAmmo = 10;
     
@@ -18,36 +21,48 @@ public class PlayerController : MonoBehaviour
     [HideInInspector]
     public int ammo;
     
-    private Rigidbody rb; // Reference to player's Rigidbody.
+    private Rigidbody _rb; 
+    private float _rotationX = 0.0f;
+    private bool _isGrounded;
     
     
-    // Start is called before the first frame update
     private void Start()
     {
-        rb = GetComponent<Rigidbody>(); // Access player's Rigidbody.
+        _rb = GetComponent<Rigidbody>();
         ammo = defaultAmmo;
         health = defaultHealth;
+        Cursor.lockState = CursorLockMode.Locked;
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
-        
+        Move();
+        Look();
     }
 
-
-    // Handle physics-based movement and rotation.
-    private void FixedUpdate()
+    private void Move()
     {
-        // Move player based on vertical input.
-        float moveVertical = Input.GetAxis("Vertical");
-        Vector3 movement = transform.forward * moveVertical * speed * Time.fixedDeltaTime;
-        rb.MovePosition(rb.position + movement);
+        float vertical = Input.GetAxis("Vertical");
+        float horizontal = Input.GetAxis("Horizontal");
+        Vector3 movement = new Vector3(horizontal, 0, vertical);
+        transform.Translate(movement * speed * Time.deltaTime);
 
-        // Rotate player based on horizontal input.
-        float turn = Input.GetAxis("Horizontal") * rotationSpeed * Time.fixedDeltaTime;
-        Quaternion turnRotation = Quaternion.Euler(0f, turn, 0f);
-        rb.MoveRotation(rb.rotation * turnRotation);
+        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+        {
+            _rb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+        }
+    }
+
+    private void Look()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * lookSpeed;
+        float mouseY = Input.GetAxis("Mouse Y") * lookSpeed;
+
+        _rotationX -= mouseY;
+        _rotationX = Mathf.Clamp(_rotationX, -90f, 90f);
+        
+        playerCamera.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
+        transform.Rotate(0, mouseX, 0);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -66,4 +81,21 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = true;
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = false;
+        }
+    }
+
 }
