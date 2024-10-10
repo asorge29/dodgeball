@@ -7,6 +7,9 @@ public class Ball : MonoBehaviour
 {
     [HideInInspector]
     public bool live;
+
+    [HideInInspector]
+    public int parent;
     
     void Start()
     {
@@ -24,10 +27,12 @@ public class Ball : MonoBehaviour
         if (collision.gameObject.CompareTag("Wall") && live)
         {
             live = false;
+            parent = 0;
         }
         else if (collision.gameObject.CompareTag("Player"))
         {
-            if (!live)
+            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+            if (!live && player.ammo < player.maxAmmo)
             {
                 Destroy(gameObject);
             }
@@ -38,9 +43,10 @@ public class Ball : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            if (live)
+            if (live && collision.gameObject.transform.GetInstanceID() != parent)
             {
                 live = false;
+                parent = 0;
             }
         }
     }

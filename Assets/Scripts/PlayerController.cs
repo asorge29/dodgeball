@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     public float speed = 5.0f;
     public float sprintSpeed = 10.0f;
-    public float maxSprintTime = 20.0f;
+    public float maxSprintTime = 6.0f;
     public float lookSpeed = 2f;
     public float jumpPower = 8.0f;
 
@@ -15,10 +15,10 @@ public class PlayerController : MonoBehaviour
     public GameObject ballPrefab;
     public float throwPower = 10.0f;
     
-    public int maxAmmo;
+    public int maxAmmo = 10;
     public int defaultAmmo = 10;
     
-    public int maxHealth;
+    public int maxHealth = 100;
     public int defaultHealth = 100;
     
     [HideInInspector]
@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
     private float _rotationX;
     private bool _isGrounded;
     private bool _sprinting;
-    private float _sprintRemaining
+    private float _sprintRemaining;
     
     
     private void Start()
@@ -40,6 +40,7 @@ public class PlayerController : MonoBehaviour
         ammo = defaultAmmo;
         health = defaultHealth;
         Cursor.lockState = CursorLockMode.Locked;
+        _sprintRemaining = maxSprintTime;
     }
     
     void Update()
@@ -58,8 +59,30 @@ public class PlayerController : MonoBehaviour
     {
         float vertical = Input.GetAxis("Vertical");
         float horizontal = Input.GetAxis("Horizontal");
-        Vector3 movement = new Vector3(horizontal, 0, vertical);
-        transform.Translate(movement * speed * Time.deltaTime);
+        Vector3 movement = new Vector3(horizontal, 0, vertical).normalized;
+
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            if (_sprintRemaining > 0)
+            {
+                _sprinting = true;
+                _sprintRemaining -= Time.deltaTime;
+            }
+            else
+            {
+                _sprinting = false;
+            }
+        }
+        else
+        {
+            _sprinting = false;
+            _sprintRemaining += Time.deltaTime;
+        }
+        
+        float currentSpeed = _sprinting ? sprintSpeed : speed;
+        transform.Translate(movement * currentSpeed * Time.deltaTime);
+        _sprintRemaining = Mathf.Clamp(_sprintRemaining, 0, maxSprintTime);
+        
 
         if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
         {
@@ -87,12 +110,13 @@ public class PlayerController : MonoBehaviour
         } 
         else if (collision.gameObject.CompareTag("Ball"))
         {
-            if (collision.gameObject.GetComponent<Ball>().live)
+            Ball ball = collision.gameObject.GetComponent<Ball>();
+            if (ball.live && ball.parent != transform.GetInstanceID()) 
             {
                 health -= 10;
                 Debug.Log(health.ToString());
             }
-            else
+            else if (!ball.live && ammo < maxAmmo)
             {
                 ammo++;
                 Debug.Log(ammo.ToString());
@@ -110,14 +134,16 @@ public class PlayerController : MonoBehaviour
 
     private void Throw()
     {
-        if (ballPrefab != null)
+        if (ballPrefab != null && ammo > 0)
         {
             GameObject ball = Instantiate(ballPrefab, playerCamera.transform.position, playerCamera.transform.rotation);
+            ball.GetComponent<Ball>().parent = transform.GetInstanceID();
             Rigidbody ballRb = ball.GetComponent<Rigidbody>();
             if (ballRb != null)
             {
                 Vector3 throwDirection = playerCamera.transform.forward;
-                ballRb.AddForce(throeDirection * throwPower, ForceMode.Impulse);
+                ballRb.AddForce(throwDirection * throwPower, ForceMode.Impulse);
+                ammo--;
             }
         }
     }

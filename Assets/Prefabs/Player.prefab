@@ -141,12 +141,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 5
+  sprintSpeed: 10
+  maxSprintTime: 6
   lookSpeed: 2
   jumpPower: 8
   playerCamera: {fileID: 4756433300326590241}
-  maxAmmo: 0
+  ballPrefab: {fileID: 1553320688445849135, guid: 3ab087343a38fb546884560bfc659ae3, type: 3}
+  throwPower: 50
+  maxAmmo: 10
   defaultAmmo: 10
-  maxHealth: 0
+  maxHealth: 100
   defaultHealth: 100
   health: 0
   ammo: 0
