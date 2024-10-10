@@ -5,6 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float speed = 5.0f;
+    public float sprintSpeed = 10.0f;
+    public float maxSprintTime = 20.0f;
     public float lookSpeed = 2f;
     public float jumpPower = 8.0f;
 
@@ -28,6 +30,8 @@ public class PlayerController : MonoBehaviour
     private Rigidbody _rb; 
     private float _rotationX;
     private bool _isGrounded;
+    private bool _sprinting;
+    private float _sprintRemaining
     
     
     private void Start()
