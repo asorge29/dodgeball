@@ -24,7 +24,7 @@ public class Ball : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Wall") && live)
+        if ((collision.gameObject.CompareTag("Wall") || collision.gameObject.CompareTag("Ground")) && live)
         {
             live = false;
             parent = 0;
