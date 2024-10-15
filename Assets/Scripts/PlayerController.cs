@@ -1,8 +1,7 @@
-using UnityEditor.Search;
+using Unity.Netcode;
 using UnityEngine;
 
-// Controls player movement and rotation.
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     public float speed = 5.0f;
     public float sprintSpeed = 10.0f;
@@ -21,49 +20,44 @@ public class PlayerController : MonoBehaviour
     public int maxHealth = 100;
     public int defaultHealth = 100;
     
-    [HideInInspector]
-    public int health;
-    
-    [HideInInspector]
-    public int ammo;
-    
     private Rigidbody _rb; 
     private float _rotationX;
-    private bool _isGrounded;
+    private NetworkVariable<bool> _isGrounded = new NetworkVariable<bool>();
     private bool _sprinting;
     private float _sprintRemaining;
     
-    
-    private void Start()
+    void Start()
     {
-        _rb = GetComponent<Rigidbody>();
-        ammo = defaultAmmo;
-        health = defaultHealth;
-        Cursor.lockState = CursorLockMode.Locked;
-        _sprintRemaining = maxSprintTime;
+        if (!IsOwner)
+        { 
+            playerCamera.gameObject.SetActive(false);
+        }
+        else
+        {
+            _rb = GetComponent<Rigidbody>();
+            _sprintRemaining = maxSprintTime;
+            playerCamera.gameObject.SetActive(true);
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
     
     void Update()
     {
+        if (!IsOwner) return;
         Move();
         Look();
-        Vector3 currentRotation = transform.eulerAngles;
-        transform.eulerAngles = new Vector3(0.0f, currentRotation.y, 0.0f);
-        if (Input.GetMouseButtonDown(0))
-        {
-            Throw();
-        }
     }
 
-    private void Move()
+    public void Move()
     {
         float vertical = Input.GetAxis("Vertical");
         float horizontal = Input.GetAxis("Horizontal");
         Vector3 movement = new Vector3(horizontal, 0, vertical).normalized;
-
+        
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            if (_sprintRemaining > 0)
+            if (_sprintRemaining > 0)// && _isGrounded.Value)
             {
                 _sprinting = true;
                 _sprintRemaining -= Time.deltaTime;
@@ -76,21 +70,42 @@ public class PlayerController : MonoBehaviour
         else
         {
             _sprinting = false;
-            _sprintRemaining += Time.deltaTime;
+            _sprintRemaining += Time.deltaTime / 2.0f;
+            _sprintRemaining = Mathf.Clamp(_sprintRemaining, 0, maxSprintTime);
         }
         
         float currentSpeed = _sprinting ? sprintSpeed : speed;
-        transform.Translate(movement * currentSpeed * Time.deltaTime);
-        _sprintRemaining = Mathf.Clamp(_sprintRemaining, 0, maxSprintTime);
         
-
-        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space))// && _isGrounded.Value)
         {
-            _rb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+            JumpServerRpc();
         }
+        
+        MoveServerRpc(movement, currentSpeed);
+    }
+    
+    [ServerRpc]
+    void MoveServerRpc(Vector3 movement, float currentSpeed)
+    {
+        transform.Translate(movement * currentSpeed * Time.deltaTime);
     }
 
-    private void Look()
+    [ServerRpc]
+    void JumpServerRpc()
+    {
+        if (!_isGrounded.Value) return;
+        _rb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+        JumpClientRpc();
+    }
+
+    [ClientRpc]
+    void JumpClientRpc()
+    {
+        if (!IsOwner) return;
+        _rb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+    }
+    
+    public void Look()
     {
         float mouseX = Input.GetAxis("Mouse X") * lookSpeed;
         float mouseY = Input.GetAxis("Mouse Y") * lookSpeed;
@@ -98,29 +113,36 @@ public class PlayerController : MonoBehaviour
         _rotationX -= mouseY;
         _rotationX = Mathf.Clamp(_rotationX, -90f, 90f);
         
-        playerCamera.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
-        transform.Rotate(0, mouseX, 0);
+        LookServerRpc(_rotationX, mouseX);
     }
 
-    private void OnCollisionEnter(Collision collision)
+    [ServerRpc]
+    void LookServerRpc(float rotationX, float mouseX)
+    {
+        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+        transform.Rotate(Vector3.up * mouseX);
+        
+        UpdateCameraRotationClientRpc(rotationX);
+    }
+
+    [ClientRpc]
+    void UpdateCameraRotationClientRpc(float rotationX)
+    {
+        if (!IsOwner) return;
+        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+    }
+
+    [ServerRpc]
+    private void UpdateGroundedStateServerRpc(bool isGrounded)
+    {
+        _isGrounded.Value = isGrounded;
+    }
+
+    private void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            _isGrounded = true;
-        } 
-        else if (collision.gameObject.CompareTag("Ball"))
-        {
-            Ball ball = collision.gameObject.GetComponent<Ball>();
-            if (ball.live && ball.parent != transform.GetInstanceID()) 
-            {
-                health -= 10;
-                Debug.Log(health.ToString());
-            }
-            else if (!ball.live && ammo < maxAmmo)
-            {
-                ammo++;
-                Debug.Log(ammo.ToString());
-            }
+            UpdateGroundedStateServerRpc(true);
         }
     }
     
@@ -128,23 +150,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            _isGrounded = false;
-        }
-    }
-
-    private void Throw()
-    {
-        if (ballPrefab != null && ammo > 0)
-        {
-            GameObject ball = Instantiate(ballPrefab, playerCamera.transform.position, playerCamera.transform.rotation);
-            ball.GetComponent<Ball>().parent = transform.GetInstanceID();
-            Rigidbody ballRb = ball.GetComponent<Rigidbody>();
-            if (ballRb != null)
-            {
-                Vector3 throwDirection = playerCamera.transform.forward;
-                ballRb.AddForce(throwDirection * throwPower, ForceMode.Impulse);
-                ammo--;
-            }
+            UpdateGroundedStateServerRpc(false);
         }
     }
 }

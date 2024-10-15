@@ -4,7 +4,7 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 26
-  productGUID: fb7af422a745d474584c6e5122664e08
+  productGUID: 8ea12c6748100ec41961cb438239fee0
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: DefaultCompany
-  productName: fps_dodgeball
+  productName: multiplayer_test
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -677,14 +677,14 @@ PlayerSettings:
   apiCompatibilityLevelPerPlatform: {}
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: fps_dodgeball
+  metroPackageName: multiplayer_test
   metroPackageVersion: 
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: fps_dodgeball
+  metroApplicationDescription: multiplayer_test
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0
@@ -754,10 +754,10 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: 3fa84b00-d56e-4c3d-9aeb-e8fe8d51c6e8
+  cloudProjectId: 75f5d774-ab53-479a-b1bd-45bc040f6bde
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: fps_dodgeball
+  projectName: multiplayer_test
   organizationId: oceans4496
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
